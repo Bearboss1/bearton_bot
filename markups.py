@@ -14,7 +14,7 @@ def show_channels():
         btn = InlineKeyboardButton(text=channel[0], url=channel[2])
         keyboard.insert(btn)
 
-    btn_done_sub = InlineKeyboardButton(text="I am subscribed", callback_data="sub_channel_done")
+    btn_done_sub = InlineKeyboardButton(text="Я подписался!", callback_data="sub_channel_done")
     keyboard.insert(btn_done_sub)
 
     return keyboard

@@ -1,4 +1,5 @@
 import sqlite3
+import random
 
 
 class Database:
@@ -19,13 +20,18 @@ class Database:
             else:
                 return self.cursor.execute("INSERT INTO users (user_id) VALUES (?)", (user_id,))
 
+    def delete_user(self, user_id):
+        with self.connection:
+            return self.cursor.execute("DELETE FROM users WHERE user_id=(?)", (user_id,))
+
     def count_referrals(self, user_id):
         with self.connection:
-            return self.cursor.execute("SELECT COUNT('id') as count FROM 'users' WHERE 'referrer_id' = ?",
+            return self.cursor.execute("SELECT COUNT (id) as count FROM users WHERE referrer_id = ?",
                                        (user_id,)).fetchone()[0]
 
-    def check_raffle_winner(self):
-        pass
+    def get_users(self):
+        with self.connection:
+            users = self.cursor.execute("SELECT user_id FROM users")
+            users_list = [users[0] for users in users.fetchall()]
 
-    def check_best_reffer(self):
-        pass
+            return users_list
