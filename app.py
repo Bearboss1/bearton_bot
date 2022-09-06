@@ -58,11 +58,13 @@ async def check_sub_channels(channels, user_id):
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
     if message.chat.type == 'private':
+        global start_command
+        start_command = message.text
         if await check_sub_channels(config.CHANNELS, message.from_user.id):
             if not db.user_exists(message.from_user.id):
-                start_command = message.text
-                referrer_id = str(start_command[7:])
-                if str(referrer_id) != "":
+                splited = start_command.split()
+                if len(splited) == 2:
+                    referrer_id = splited[1]
                     if str(referrer_id) != str(message.from_user.id):
                         db.add_user(message.from_user.id, referrer_id)
                         try:
@@ -125,10 +127,31 @@ async def bot_message(message: types.Message):
 @rate_limit(limit=2)
 @dp.callback_query_handler(text="sub_channel_done")
 async def sub_channel_done(message: types.Message):
+
     await bot.delete_message(message.from_user.id, message.message.message_id)
 
     if await check_sub_channels(config.CHANNELS, message.from_user.id):
-        await bot.send_message(message.from_user.id, config.YOU_ARE_SUB, reply_markup=markups.profile_keyboard)
+        if not db.user_exists(message.from_user.id):
+            splited = start_command.split()
+            if len(splited) == 2:
+                referrer_id = splited[1]
+                if str(referrer_id) != str(message.from_user.id):
+                    db.add_user(message.from_user.id, referrer_id)
+                    await bot.send_message(message.from_user.id, config.WELCOME_MESSAGE,
+                                           reply_markup=markups.profile_keyboard)
+                    try:
+                        await bot.send_message(referrer_id, config.NEW_REF_MESSAGE)
+                    except:
+                        pass
+                else:
+                    await bot.send_message(message.from_user.id, config.SELF_REF_MESSAGE)
+            else:
+                db.add_user(message.from_user.id)
+                await bot.send_message(message.from_user.id, config.WELCOME_MESSAGE,
+                                       reply_markup=markups.profile_keyboard)
+        else:
+            await bot.send_message(message.from_user.id, config.TAKED_PART_MESSAGE,
+                                   reply_markup=markups.profile_keyboard)
     else:
         await bot.send_message(message.from_user.id, config.NOT_SUB_MESSAGE,
                                reply_markup=markups.show_channels())
